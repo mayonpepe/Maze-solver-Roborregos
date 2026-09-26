@@ -26,59 +26,73 @@ int ObjetivoActual = 26;
 //Movimientos hechos hasta el momento
 int MovimientosTotales = 0;
 
-//Factor para aumentar el peso de las veces pasadas en el calculo de la prioridad
-float FactorPasados = 2.5;
+//Factor para modificar el peso de las veces pasadas en el calculo de la prioridad
+float FactorPasados = 3;
 
-//Factor para aumentar el peso de la distancia en el calculo de la prioridad
+//Factor para modificar el peso de la distancia en el calculo de la prioridad
 float FactorDistancia = 1;
 
-float FactorX = 0;
+//Factor para modificar el peso de las casillas pasadas recientemente por el robot en el calculo de la prioridad
+float FactorRecientes = 0;
 
 //Mapa que guarda la etiqueta del objetivo de cada casilla
-int Mapa[5][5] =       {{0, 0, 0, 0, 0},
-                        {0, 0, 0, 0, 0},
-                        {0, 0, 0, 0, 0},
-                        {0, 0, 0, 0, 0},
-                        {0, 0, 0, 0, 0}};
+int Mapa[5][5] ={
+    {0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0}
+};
 
 //Mapa que guarda la cantidad de veces que se ha pasado por cada casilla
-float MapaRevisado[5][5]={{0, 0, 0, 0, 0},
-                          {0, 0, 0, 0, 0},
-                          {0, 0, 0, 0, 0},
-                          {0, 0, 0, 0, 0},
-                          {0, 0, 0, 0, 0}};
+float MapaRevisado[5][5]= {{0, 0, 0, 0, 0},
+                           {0, 0, 0, 0, 0},
+                           {0, 0, 0, 0, 0},
+                           {0, 0, 0, 0, 0},
+                           {0, 0, 0, 0, 0}};
+
+int ListaRecientes[5][3] = {{0, 0, 5},
+                            {0, 0, 4},
+                            {0, 0, 3},
+                            {0, 0, 2},
+                            {0, 0, 1}};
 
 //Mapa que guarda la posicion de los obstaculos
-int Obstaculos[5][5] = {{0, 0, 0, 1, 0},
-                        {0, 0, 2, 0, 0},
-                        {0, 0, 0, 0, 4},
-                        {0, 0, 0, 0, 4},
-                        {0, 1, 0, 0, 0}};
+int Obstaculos[5][5] =    {{0, 0, 0, 1, 0},
+                           {0, 0, 2, 0, 0},
+                           {0, 0, 0, 0, 4},
+                           {0, 0, 0, 0, 4},
+                           {0, 1, 0, 0, 0}};
 
 //Mapa que guarda la posicion de cada color (Simulacion)
-int Colores[5][5] =    {{3, 0, 0, 0, 0},
-                        {0, 2, 0, 0, 0},
-                        {1, 0, 0, 0, 0},
-                        {0, 0, 0, 0, 0},
-                        {0, 0, 4, 0, 0}};
+int Colores[5][5] =       {{3, 0, 0, 0, 0},
+                           {0, 2, 0, 0, 0},
+                           {1, 0, 0, 0, 0},
+                           {0, 0, 0, 0, 0},
+                           {0, 0, 4, 0, 0}};
 
-//Mapa que guarda la posicion de cada pared vertical (Simulacion)
-int ParedesX[6][5] =   {{1, 1, 1, 1, 1},
-                        {1, 0, 0, 0, 0},
-                        {0, 1, 0, 0, 0},
-                        {0, 0, 0, 0, 0},
-                        {0, 1, 0, 1, 0},
-                        {1, 1, 1, 1, 1}};
+//Mapa que guarda la posicion de cada pared horizontal (Simulacion)
+int ParedesX[6][5] =      
+{{1, 1, 1, 1, 1},
+ {0, 1, 0, 1, 0},
+ {1, 1, 0, 0, 0},
+ {0, 0, 0, 0, 1},
+ {0, 0, 1, 0, 0},
+ {1, 1, 1, 1, 1}};
     
 //Mapa que guarda la posicion de cada pared vertical (Simulacion)
-int ParedesY[5][6] =   {{1, 0, 0, 0, 0, 1},
-                        {1, 0, 1, 1, 1, 1},
-                        {1, 1, 0, 1, 1, 1},
-                        {1, 1, 0, 1, 1, 1},
-                        {1, 0, 0, 0, 1, 1}};
+int ParedesY[5][6] =   
+{{1, 1, 0, 0, 0, 1},
+ {1, 0, 0, 0, 0, 1},
+ {1, 0, 0, 0, 0, 1},
+ {1, 1, 1, 0, 1, 1},
+ {1, 0, 0, 0, 0, 1}};
 
 //Condicion que sirve para mover la columna a mapear en casos especiales (Inicio y columna sin objetivos disponibles)
 int CondicionColumna = 0;
+
+//Contador que sirve para saber cuantos objetivos se han logrado
+int ContadorObjetivos = 0;
 
 //Considerar inicio a la derecha
 
@@ -86,32 +100,26 @@ int CondicionColumna = 0;
 // le dice en que orden eligirá sus objetivos, lo hace columna a columna cuando termina todos los objetivos de una
 void MapeadoObjetivos(){
 
-    if(PosicionActual[0] <= 2){
+    if(PosicionActual[0] >= 2){
 
+        for(int i = 4; i >= 0 ; i--){
+            Mapa[i][PosicionActual[1] + CondicionColumna] = (5 - i) + 5 * (PosicionActual[1] + CondicionColumna);
+        }
+
+    }
+    else{
         for(int i = 0; i <= 4; i++){
             Mapa[i][PosicionActual[1] + CondicionColumna] = (i + 1) + 5 * (PosicionActual[1] + CondicionColumna);
         }
 
     }
-    else{
-        for(int i = 4; i >= 0; i--){
-            Mapa[i][PosicionActual[1] + CondicionColumna] = (5 - i) + 5 * (PosicionActual[1] + CondicionColumna);
-        }
-
-    }
-
-    /*for(int i = 0; i < 5; i++){
-        for(int j = 0; j < 5; j++){
-            cout << Mapa[i][j] << ", ";
-        }
-        cout << endl;
-
-    }*/
 }
+
 //Contador que registra cuantas veces se cambio el objetivo (si es 0 es un caso especial para MapeadoObjetivos())
 int ContadorObjetivosColumna = 0;
+
 //Variable temporal que sirve para elegir la etiqueta de objetivo con menor valor
-int ObjetivoTemporal = 0;
+int ObjetivoTemporal = 999;
 
 //Define el objetivo actual, eligiendo la casilla con con menor etiqueta de objetivo y verificando que el robot no haya pasado por ahi
 void CalcularObjetivo(){
@@ -121,17 +129,27 @@ void CalcularObjetivo(){
     for(int i = 0; i < 5; i++){
 
         for(int j = 0; j < 5; j++){
+
             if(Mapa[i][j] != 0 and Mapa[i][j] <= ObjetivoTemporal and MapaRevisado[i][j] == 0){
-                //cout << "Mi ObjetivoTemporal era " << ObjetivoTemporal << " y lo cambie a " << Mapa[i][j] << " en " << i << ", " << j << " con valor de Maparevisado de " << Maparevisado[i][j] << endl;
                 Oy = i;
                 Ox = j;
                 ObjetivoTemporal = Mapa[i][j];
                 ContadorObjetivosColumna++;
             }
+
         }
     }
     ObjetivoActual = ObjetivoTemporal;
-    cout << "Mi nuevo objetivo es " << ObjetivoActual << " y esta en " << Oy << ", " << Ox << endl;
+
+    /*for(int i = 0; i < 5; i++){
+        for(int j = 0; j < 5; j++){
+            cout << MapaRevisado[i][j] << ", ";
+        }
+        cout << endl;
+    }
+    cout << endl;*/
+    
+    cout << "Mi nuevo objetivo es " << Oy << ", " << Ox << endl;
 }
 
 //Funcion que simula el sensor ultrasonico, accediendo a la matriz con las paredes guardadas
@@ -139,6 +157,7 @@ int Sensor(int n){
     switch(n){
 
         case 1:
+
             if(ParedesX[PosicionActual[0]][PosicionActual[1]] == 1){
                 return 1;
             }
@@ -147,6 +166,8 @@ int Sensor(int n){
         case 2:
 
             if(ParedesY[PosicionActual[0]][PosicionActual[1] + 1] == 1){
+                //cout << "Habia una pared en " << PosicionActual[0] << ", " << PosicionActual[1] + 1 << endl;
+                //cout << ParedesY[PosicionActual[0]][PosicionActual[1] + 1] << endl;
                 return 1;
             }
             else return 0;
@@ -207,6 +228,32 @@ int VecesPasadas(int n){
     }
 }
 
+void ActualizarListaRecientes(){
+
+    for(int i = 0; i < 4; i++){
+
+        ListaRecientes[i][0] = ListaRecientes[i + 1][0];
+        ListaRecientes[i][1] = ListaRecientes[i + 1][1];
+
+        //cout << ListaRecientes[i][0] << ", " << ListaRecientes[i][1] << endl;
+    }
+    ListaRecientes[4][0] = PosicionActual[0];
+    ListaRecientes[4][1] = PosicionActual[1];
+
+}
+
+int MovimientosRecientes(int a, int b){
+
+    for(int i = 0; i < 5; i++){
+
+        if(ListaRecientes[i][0] == a and ListaRecientes[i][1] == b){
+            return ListaRecientes[i][2];
+        }
+
+    }
+    return 0;
+}
+
 //Prioridada de la casilla a la que lleva cada movimiento
 float PrioridadMovimiento[4] = {0, 0, 0, 0};
 
@@ -215,22 +262,22 @@ float PrioridadMovimiento[4] = {0, 0, 0, 0};
 void CalcularPrioridad(){
 
     if(PosicionActual[0] != 0){
-        PrioridadMovimiento[0] = Distancia(PosicionActual[0] - 1, PosicionActual[1])*FactorDistancia + VecesPasadas(1)*FactorPasados;
+        PrioridadMovimiento[0] = Distancia(PosicionActual[0] - 1, PosicionActual[1])*FactorDistancia + VecesPasadas(1)*FactorPasados + MovimientosRecientes(PosicionActual[0] - 1, PosicionActual[1])*FactorRecientes;
     }
     else DisponibilidadMovimiento[0] = 1;
     
     if(PosicionActual[1] != 4){
-        PrioridadMovimiento[1] = Distancia(PosicionActual[0], PosicionActual[1] + 1)*FactorDistancia + VecesPasadas(2)*FactorPasados;
+        PrioridadMovimiento[1] = Distancia(PosicionActual[0], PosicionActual[1] + 1)*FactorDistancia + VecesPasadas(2)*FactorPasados + MovimientosRecientes(PosicionActual[0], PosicionActual[1] + 1)*FactorRecientes;
     }
     else DisponibilidadMovimiento[1] = 1;
 
     if(PosicionActual[0] != 4){
-        PrioridadMovimiento[2] = Distancia(PosicionActual[0] + 1, PosicionActual[1])*FactorDistancia + VecesPasadas(3)*FactorPasados;
+        PrioridadMovimiento[2] = Distancia(PosicionActual[0] + 1, PosicionActual[1])*FactorDistancia + VecesPasadas(3)*FactorPasados + MovimientosRecientes(PosicionActual[0] + 1, PosicionActual[1])*FactorRecientes;
     }
     else DisponibilidadMovimiento[2] = 1;
 
     if(PosicionActual[1] != 0){
-        PrioridadMovimiento[3] = Distancia(PosicionActual[0], PosicionActual[1] - 1)*FactorDistancia + VecesPasadas(4)*FactorPasados;
+        PrioridadMovimiento[3] = Distancia(PosicionActual[0], PosicionActual[1] - 1)*FactorDistancia + VecesPasadas(4)*FactorPasados + MovimientosRecientes(PosicionActual[0], PosicionActual[1] - 1)*FactorRecientes;
     }
     else DisponibilidadMovimiento[3] = 1;
 
@@ -258,21 +305,18 @@ void MejorMovimiento(){
             MovimientoActual = i + 1;
 
         }
-       /* else if(Movdis[i] == 0){
-            cout << "El movimiento no se cambio a " << i + 1 << " porque " << Mov[i] << " > " << Movi << endl;
-        }
-        else cout << "El movimiento no se cambio a " << i + 1 << " porque Movdis[i] = " << Movdis[i] << endl;   
-        */
         
-        
+        //cout << PrioridadMovimiento[i] << ", ";
 
     }
+    //cout <<  "El mejor movimiento es " << MovimientoActual << endl;
 
     if(Sensor(MovimientoActual) == 1){
+        //cout << "Ups, habia una pared al intentar moverse hacia " << MovimientoActual << endl;
         DisponibilidadMovimiento[MovimientoActual - 1] = 1;
         EstadoMovimiento = 1;
     }
-
+    
     else EstadoMovimiento = 0;
 
 }
@@ -314,7 +358,7 @@ void Movimiento(int n){
         DisponibilidadMovimiento[i] = 0;
     }
 
-    //cout << "Me movi a " << Posicion[0] << ", " << Posicion[1] << endl;
+    //cout << "Me movi a " << PosicionActual[0] << ", " << PosicionActual[1] << endl;
     cout << "Me movi hacia " << MovimientoActual << endl;
     //cout << "Ahora Maparevisado " << Posicion[0] << ", " << Posicion[1] << " tiene un valor de " << MapaRevisado[Posicion[0]][Posicion[1]] << endl;
 }
@@ -338,7 +382,9 @@ int main()
 
     MapeadoObjetivos();
     CondicionColumna++;
+
     CalcularObjetivo();
+
 
     while(EstadoLaberinto == 0){
 
@@ -351,6 +397,7 @@ int main()
         }
 
         Movimiento(MovimientoActual);
+        ActualizarListaRecientes();
 
         
 
@@ -363,17 +410,19 @@ int main()
                 }
 
             }
+        
 
             if(ContadorColumna == 5){
 
                 MapeadoObjetivos();
-                ContadorColumna = 0;
 
             }
+            ContadorColumna = 0;
 
             CalcularObjetivo();
 
             if(ContadorObjetivosColumna == 0){
+                
                 CondicionColumna++;
                 MapeadoObjetivos();
                 CalcularObjetivo();
@@ -381,35 +430,43 @@ int main()
 
             }
 
+
         }
 
-        if(MapaRevisado[0][4] > 0 and MapaRevisado[4][4] > 0 and EstadoObjetivos == 0){
+        for(int i = 0; i < 5; i++){
+            for(int j = 0; j < 5; j++){
+                if(MapaRevisado[i][j] > 0){
+                    ContadorObjetivos++;
+                }
+            }
+        }
 
+        if(ContadorObjetivos == 25 and EstadoObjetivos == 0){
+
+            //cout << "hola" << endl;
             EstadoObjetivos++;
             Ox = Final[1];
             Oy = Final[0];
 
-            if(PosicionActual[0] = Oy and PosicionActual[1] == Ox){
+            if(PosicionActual[0] == Oy and PosicionActual[1] == Ox){
                 EstadoLaberinto++;
                 EstadoObjetivos--;
             }
 
         }
 
+        ContadorObjetivos = 0;
+
         if(EstadoObjetivos > 0){
-            
-            while(EstadoMovimiento == 1){
-            
-                MejorMovimiento();
 
-            }
-
-            Movimiento(MovimientoActual);
-
-            if(PosicionActual[0] = Oy and PosicionActual[1] == Ox){
+            if(PosicionActual[0] == Oy and PosicionActual[1] == Ox){
                 EstadoLaberinto++;
             }
 
+        }
+        
+        if(MovimientosTotales > 60){
+            //EstadoLaberinto++;
         }
 
     }
