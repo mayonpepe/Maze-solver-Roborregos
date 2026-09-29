@@ -1,68 +1,105 @@
-#include <iostream>
-using namespace std;
+struct SensorUltrasonico {
 
-//Simulacion
-struct Sensor {
+    int PinTrigger;
+    int PinEcho;
 
-    //Mapa que guarda la posicion de cada pared horizontal (Simulacion)
-    int ParedesX[6][5] =      
-    {{1, 1, 1, 1, 1},
-    {0, 1, 0, 1, 0},
-    {1, 1, 0, 0, 0},
-    {0, 0, 0, 0, 1},
-    {0, 0, 1, 0, 0},
-    {1, 1, 1, 1, 1}};
-    
-    //Mapa que guarda la posicion de cada pared vertical (Simulacion)
-    int ParedesY[5][6] =   
-    {{1, 1, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 1},
-    {1, 1, 1, 0, 1, 1},
-    {1, 0, 0, 0, 0, 1}};
-
-    //Funcion que simula el sensor ultrasonico, accediendo a la matriz con las paredes guardadas
-    int SensorParedes(int MovimientoActual, int PosicionActual[2]){
-
-        switch(MovimientoActual){
-
-            case 1:
-
-                if(ParedesX[PosicionActual[0]][PosicionActual[1]] == 1){
-                return 1;
-            }
-            else return 0;
-
-        case 2:
-
-            if(ParedesY[PosicionActual[0]][PosicionActual[1] + 1] == 1){
-                //cout << "Habia una pared en " << PosicionActual[0] << ", " << PosicionActual[1] + 1 << endl;
-                //cout << ParedesY[PosicionActual[0]][PosicionActual[1] + 1] << endl;
-                return 1;
-            }
-            else return 0;
-        
-        case 3:
-
-            if(ParedesX[PosicionActual[0] + 1][PosicionActual[1]] == 1){
-                return 1;
-            }
-            else return 0;
-        
-        case 4:
-
-            if(ParedesY[PosicionActual[0]][PosicionActual[1]] == 1){
-                return 1;
-            }
-            else return 0;
-
-        default:
-            return -1;
+    SensorUltrasonico(int Trigger, int Echo){
+        PinTrigger = Trigger;
+        PinEcho = Echo;
     }
 
-    
-    
-}
+    void Inicializar(){
+        pinMode(PinTrigger, OUTPUT);
+        pinMode(PinEcho, INPUT);
+    }
+
+    float LeerDistancia(){
+        digitalWrite(PinTrigger, LOW);
+        delayMicroseconds(2);
+        digitalWrite(PinTrigger, HIGH);
+        delayMicroseconds(10);
+        digitalWrite(PinTrigger, LOW);
+
+        long Duracion = pulseIn(PinEcho, HIGH);
+        return Duracion * 0.0343 / 2;
+    }
+
+    bool HayPared(float Umbral){
+        return LeerDistancia() < Umbral;
+    }
+
+};
+
+struct SensoresUltrasonicos {
+
+    SensorUltrasonico Frontal, Derecho, Trasero, Izquierdo;
+    float UmbralPared = 15.0;
+
+    SensoresUltrasonicos() : Frontal(2, 3), Derecho(4, 5), Trasero(6, 7), Izquierdo(8, 9) {}
+
+    void Inicializar(){
+        Frontal.Inicializar();
+        Derecho.Inicializar();
+        Trasero.Inicializar();
+        Izquierdo.Inicializar();
+    }
+
+    int SensorUS(int n){
+        switch(n){
+            case 1:
+                if(Frontal.HayPared(UmbralPared)){
+                    return 1;
+                }
+                else return 0;
+
+            case 2:
+                if(Derecho.HayPared(UmbralPared)){
+                    return 1;
+                }
+                else return 0;
+
+            case 3:
+                if(Trasero.HayPared(UmbralPared)){
+                    return 1;
+                }
+                else return 0;
+
+            case 4:
+                if(Izquierdo.HayPared(UmbralPared)){
+                    return 1;
+                }
+                else return 0;
+
+            default:
+                return -1;
+        }
+    }
+
+};
+
+struct SensorColor {
+
+    int Pin; // o direccion I2C, segun el modelo
+
+    int LeerColor(){
+        // lectura real del sensor
+        return 0;
+    }
+
+};
+
+struct IMU {
+
+    int DireccionI2C;
+
+    float LeerRumbo(){
+        // lectura del compas integrado
+        return 0.0;
+    }
+
+    void LeerAceleracion(float &Ax, float &Ay, float &Az){
+        // lectura del acelerometro
+    }
 
 };
 
@@ -184,7 +221,6 @@ struct Navegacion {
 
         ObjetivoActual = 26;
         mapa.BuscarObjetivo(ObjetivoActual, Oy, Ox, ContadorObjetivosColumna);
-        cout << "Mi nuevo objetivo es " << Oy << ", " << Ox << endl;
 
     }
 
@@ -218,7 +254,7 @@ struct Navegacion {
 
     }
 
-    void MejorMovimiento(int PosicionActual[2], Sensor sensor){
+    void MejorMovimiento(int PosicionActual[2], SensoresUltrasonicos &sensor){
 
         MovientoTemporal = 200;
 
@@ -231,7 +267,7 @@ struct Navegacion {
 
         }
 
-        if(sensor.SensorParedes(MovimientoActual, PosicionActual) == 1){
+        if(sensor.SensorUS(MovimientoActual) == 1){
             DisponibilidadMovimiento[MovimientoActual - 1] = 1;
             EstadoMovimiento = 1;
         }
@@ -263,8 +299,11 @@ struct Robot {
     int ContadorColumna = 0;
 
     Mapa mapa;
-    Sensor sensor;
     Navegacion navegacion;
+
+    SensoresUltrasonicos Sensores;
+    SensorColor SensorColor1;
+    IMU Brujula;
 
     void Movimiento(int MovimientoActual){
         switch(MovimientoActual){
@@ -279,17 +318,17 @@ struct Robot {
 
         navegacion.ReiniciarMovimiento();
 
-        cout << "Me movi hacia " << MovimientoActual << endl;
-
     }
 
 
 };
 
-int main(){
+Robot robot;
 
-    Sensor sensor;
-    Robot robot;
+void setup(){
+
+    robot.Sensores.Inicializar();
+
     robot.mapa.MapaVisitadas[robot.PosicionActual[0]][robot.PosicionActual[1]] = 1;
 
     robot.mapa.MapearObjetivos(robot.PosicionActual);
@@ -297,13 +336,17 @@ int main(){
 
     robot.navegacion.CalcularObjetivo(robot.mapa);
 
-    while(robot.EstadoLaberinto == 0){
+}
+
+void loop(){
+
+    if(robot.EstadoLaberinto == 0){
 
         robot.navegacion.CalcularPrioridad(robot.PosicionActual, robot.mapa);
 
         while(robot.navegacion.EstadoMovimiento == 1){
 
-            robot.navegacion.MejorMovimiento(robot.PosicionActual, sensor);
+            robot.navegacion.MejorMovimiento(robot.PosicionActual, robot.Sensores);
 
         }
 
@@ -373,7 +416,4 @@ int main(){
 
     }
 
-    cout << "El total de movimientos fue de " << robot.MovimientosTotales << endl;
-    return 0;
 }
-
