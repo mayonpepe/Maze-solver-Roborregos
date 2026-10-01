@@ -1,3 +1,88 @@
+#include <Wire.h>
+#include <Adafruit_TCS34725.h>
+
+struct SensorColor {
+
+    Adafruit_TCS34725 Sensor = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
+
+    void Inicializar(){
+        Sensor.begin();
+    }
+
+    int LeerColor(){
+        uint16_t R, G, B, C;
+        Sensor.getRawData(&R, &G, &B, &C);
+
+        float Rojo = R / C;
+        float Verde = G / C;
+        float Azul = B / C;
+
+        //Blanco
+        if(Rojo < 1 and Rojo > 0 and Verde < 1 and Verde > 0 and Azul < 1 and Azul > 0){
+            return 0;
+        }
+
+        //Azul celeste
+        if(Rojo < 1 and Rojo > 0 and Verde < 1 and Verde > 0 and Azul < 1 and Azul > 0){
+            return 1;
+        }
+
+        //Amarillo
+        if(Rojo < 1 and Rojo > 0 and Verde < 1 and Verde > 0 and Azul < 1 and Azul > 0){
+            return 2;
+        }
+
+        //Naranja
+        if(Rojo < 1 and Rojo > 0 and Verde < 1 and Verde > 0 and Azul < 1 and Azul > 0){
+            return 3;
+        }
+
+        //Rosa
+        if(Rojo < 1 and Rojo > 0 and Verde < 1 and Verde > 0 and Azul < 1 and Azul > 0){
+            return 4;
+        }
+
+        //Rojo salida
+        if(Rojo < 1 and Rojo > 0 and Verde < 1 and Verde > 0 and Azul < 1 and Azul > 0){
+            return 5;
+        }
+
+        // aqui falta decidir como traducir R,G,B a cada color
+        return 6;
+    }
+
+};
+
+struct LedRGB {
+
+    int PinRojo;
+    int PinVerde;
+    int PinAzul;
+
+    LedRGB(int Rojo, int Verde, int Azul){
+        PinRojo = Rojo;
+        PinVerde = Verde;
+        PinAzul = Azul;
+    }
+
+    void Inicializar(){
+        pinMode(PinRojo, OUTPUT);
+        pinMode(PinVerde, OUTPUT);
+        pinMode(PinAzul, OUTPUT);
+    }
+
+    void Encender(int R, int G, int B){
+        analogWrite(PinRojo, R);
+        analogWrite(PinVerde, G);
+        analogWrite(PinAzul, B);
+    }
+
+    void Apagar(){
+        Encender(0, 0, 0);
+    }
+
+};
+
 struct SensorUltrasonico {
 
     int PinTrigger;
@@ -77,13 +162,79 @@ struct SensoresUltrasonicos {
 
 };
 
-struct SensorColor {
+struct ControladorMotores {
 
-    int Pin; // o direccion I2C, segun el modelo
+    int DireccionI2C = 0x34;
 
-    int LeerColor(){
-        // lectura real del sensor
+    long PulsosPorVuelta = 0;   // pendiente
+    float DiametroRuedaCm = 0;  // pendiente
+    int VelocidadFija = 50;
+
+    void Inicializar(){
+        // Pendiente
+    }
+
+    void EnviarVelocidad(int Canal, int Velocidad){
+        // Canal pendiente
+    }
+
+    long LeerPulsos(int Canal){
+        // Canal pendiente
         return 0;
+    }
+
+    void ReiniciarPulsos(int Canal){
+        // Canal pendiente
+    }
+
+    long DistanciaAPulsos(float DistanciaCm){
+
+        float VueltasNecesarias = DistanciaCm / (3.14159 * DiametroRuedaCm);
+        return VueltasNecesarias * PulsosPorVuelta;
+
+    }
+
+    void Detener(){
+
+        EnviarVelocidad(1, 0);
+        EnviarVelocidad(2, 0);
+        EnviarVelocidad(3, 0);
+        EnviarVelocidad(4, 0);
+
+    }
+
+    void MoverDistancia(int SignoFrontalIzq, int SignoFrontalDer, int SignoTraseraIzq, int SignoTraseraDer, float DistanciaCm){
+
+        ReiniciarPulsos(1);
+
+        long PulsosObjetivo = DistanciaAPulsos(DistanciaCm);
+
+        EnviarVelocidad(1, SignoFrontalIzq * VelocidadFija);
+        EnviarVelocidad(2, SignoFrontalDer * VelocidadFija);
+        EnviarVelocidad(3, SignoTraseraIzq * VelocidadFija);
+        EnviarVelocidad(4, SignoTraseraDer * VelocidadFija);
+
+        while(abs(LeerPulsos(1)) < PulsosObjetivo){
+        }
+
+        Detener();
+
+    }
+
+    void Movimiento1(float DistanciaCm){
+        MoverDistancia(1, 1, 1, 1, DistanciaCm);
+    }
+
+    void Movimiento3(float DistanciaCm){
+        MoverDistancia(-1, -1, -1, -1, DistanciaCm);
+    }
+
+    void Movimiento2(float DistanciaCm){
+        MoverDistancia(1, -1, -1, 1, DistanciaCm);
+    }
+
+    void Movimiento4(float DistanciaCm){
+        MoverDistancia(-1, 1, 1, -1, DistanciaCm);
     }
 
 };
@@ -303,14 +454,32 @@ struct Robot {
 
     SensoresUltrasonicos Sensores;
     SensorColor SensorColor1;
+    LedRGB Led = LedRGB(10, 11, 12);
+    ControladorMotores Motores;
     IMU Brujula;
 
+    // Pendiente corregir logica por deteccion de salida
     void Movimiento(int MovimientoActual){
         switch(MovimientoActual){
-            case 1: PosicionActual[0]--; break;
-            case 2: PosicionActual[1]++; break;
-            case 3: PosicionActual[0]++; break;
-            case 4: PosicionActual[1]--; break;
+            case 1: 
+            PosicionActual[0]--; 
+            Motores.Movimiento1(30);
+            break;
+
+            case 2: 
+            PosicionActual[1]++;
+            Motores.Movimiento2(30);
+            break;
+
+            case 3: 
+            PosicionActual[0]++;
+            Motores.Movimiento3(30);
+            break;
+
+            case 4: 
+            PosicionActual[1]--;
+            Motores.Movimiento4(30);
+            break;
         }
 
         MovimientosTotales++;
@@ -320,6 +489,19 @@ struct Robot {
 
     }
 
+    void MostrarColor(){
+        int Color = SensorColor1.LeerColor();
+
+        switch(Color){
+            case 1: Led.Encender(92, 225, 230); break;
+            case 2: Led.Encender(255, 222, 89); break;
+            case 3: Led.Encender(255, 145, 77); break;
+            case 4: Led.Encender(255, 102, 196); break;
+            default: break;
+        }
+        
+    }
+
 
 };
 
@@ -327,7 +509,12 @@ Robot robot;
 
 void setup(){
 
+    Wire.begin();
+
     robot.Sensores.Inicializar();
+    robot.SensorColor1.Inicializar();
+    robot.Led.Inicializar();
+    robot.Motores.Inicializar();
 
     robot.mapa.MapaVisitadas[robot.PosicionActual[0]][robot.PosicionActual[1]] = 1;
 
@@ -350,7 +537,12 @@ void loop(){
 
         }
 
+        robot.Led.Apagar();
+
         robot.Movimiento(robot.navegacion.MovimientoActual);
+
+        robot.MostrarColor();
+
         robot.mapa.ActualizarListaRecientes(robot.PosicionActual);
 
         if(robot.PosicionActual[0] == robot.navegacion.Oy and robot.PosicionActual[1] == robot.navegacion.Ox and robot.EstadoObjetivos == 0){

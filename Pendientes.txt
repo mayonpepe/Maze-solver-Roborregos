@@ -1,0 +1,20 @@
+Pendientes: 
+
+Corregir lógica de detección de salida y movimiento
+
+Antes de instalarla: en el Arduino IDE, ve a Herramientas > Administrar Bibliotecas, busca "Adafruit TCS34725" e instálala (te va a pedir instalar también "Adafruit BusIO" como dependencia — acéptalo).
+
+LED:
+Si es ánodo común, la única diferencia es invertir los valores en Encender y Apagar, porque ahí es al revés: 0 es máximo brillo y 255 es apagado.
+Pines en Robot
+
+Pines de sensores ultrasónicos en SensoresUltrasonicos.
+
+Driver:
+El protocolo exacto (qué bytes exactos hay que mandar por I2C para fijar la velocidad de cada canal). Hiwonder normalmente incluye eso en el código de ejemplo que viene con el producto o en su repositorio de GitHub
+
+Pulsos por vuelta del encoder de tus motores GA12-N20 (viene en la hoja de datos del motor específico que compraste — varía según el modelo, y afecta directamente cuántos pulsos corresponden a una vuelta completa de la rueda).
+
+Diámetro de tus ruedas mecanum (para convertir "vueltas de rueda" a "centímetros recorridos": distancia por vuelta = π × diámetro).
+
+El tamaño real de una casilla de tu laberinto en centímetros (para saber cuánta distancia debe recorrer el robot por cada movimiento).
