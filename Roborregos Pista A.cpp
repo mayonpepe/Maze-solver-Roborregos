@@ -168,6 +168,7 @@ struct ControladorMotores {
 
     long PulsosPorVuelta = 0;   // pendiente
     float DiametroRuedaCm = 0;  // pendiente
+    float DistanciaEntreRuedasCm = 0; // pendiente
     int VelocidadFija = 50;
 
     void Inicializar(){
@@ -237,7 +238,28 @@ struct ControladorMotores {
         MoverDistancia(-1, 1, 1, -1, DistanciaCm);
     }
 
-};
+    void Girar(float Grados){
+
+        ReiniciarPulsos(1);
+        ReiniciarPulsos(2);
+
+        float ArcoCm = (abs(Grados) / 360.0) * 3.14159 * DistanciaEntreRuedasCm;
+        long PulsosObjetivo = DistanciaAPulsos(ArcoCm);
+
+        int Sentido = (Grados >= 0) ? 1 : -1; // positivo = horario, negativo = antihorario
+
+        EnviarVelocidad(1, -Sentido * VelocidadFija); // frontal izquierda
+        EnviarVelocidad(2, Sentido * VelocidadFija);  // frontal derecha
+        EnviarVelocidad(3, -Sentido * VelocidadFija); // trasera izquierda
+        EnviarVelocidad(4, Sentido * VelocidadFija);  // trasera derecha
+
+        while(abs(LeerPulsos(1)) < PulsosObjetivo and abs(LeerPulsos(2)) < PulsosObjetivo){
+            // espera activa hasta completar el giro
+        }
+
+        Detener();
+
+    };
 
 struct IMU {
 
