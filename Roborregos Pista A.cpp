@@ -1,281 +1,19 @@
 #include <Wire.h>
 #include <Adafruit_TCS34725.h>
 
-struct SensorColor {
+#include "Componentes/SensorColorA.h"
+#include "Componentes/SensoresUltrasonicos.h"
+#include "Componentes/ControladorMotores.h"
+#include "Componentes/IMU.h"
+#include "Componentes/PantallaLCD.h"
 
-    Adafruit_TCS34725 Sensor = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
+struct Raspberry {
 
-    void Inicializar(){
-        Sensor.begin();
-    }
-
-    int LeerColor(){
-        uint16_t R, G, B, C;
-        Sensor.getRawData(&R, &G, &B, &C);
-
-        float Rojo = R / C;
-        float Verde = G / C;
-        float Azul = B / C;
-
-        //Blanco
-        if(Rojo < 1 and Rojo > 0 and Verde < 1 and Verde > 0 and Azul < 1 and Azul > 0){
-            return 0;
-        }
-
-        //Azul celeste
-        if(Rojo < 1 and Rojo > 0 and Verde < 1 and Verde > 0 and Azul < 1 and Azul > 0){
-            return 1;
-        }
-
-        //Amarillo
-        if(Rojo < 1 and Rojo > 0 and Verde < 1 and Verde > 0 and Azul < 1 and Azul > 0){
-            return 2;
-        }
-
-        //Naranja
-        if(Rojo < 1 and Rojo > 0 and Verde < 1 and Verde > 0 and Azul < 1 and Azul > 0){
-            return 3;
-        }
-
-        //Rosa
-        if(Rojo < 1 and Rojo > 0 and Verde < 1 and Verde > 0 and Azul < 1 and Azul > 0){
-            return 4;
-        }
-
-        //Rojo salida
-        if(Rojo < 1 and Rojo > 0 and Verde < 1 and Verde > 0 and Azul < 1 and Azul > 0){
-            return 5;
-        }
-
-        // aqui falta decidir como traducir R,G,B a cada color
-        return 6;
-    }
-
-};
-
-struct LedRGB {
-
-    int PinRojo;
-    int PinVerde;
-    int PinAzul;
-
-    LedRGB(int Rojo, int Verde, int Azul){
-        PinRojo = Rojo;
-        PinVerde = Verde;
-        PinAzul = Azul;
-    }
-
-    void Inicializar(){
-        pinMode(PinRojo, OUTPUT);
-        pinMode(PinVerde, OUTPUT);
-        pinMode(PinAzul, OUTPUT);
-    }
-
-    void Encender(int R, int G, int B){
-        analogWrite(PinRojo, R);
-        analogWrite(PinVerde, G);
-        analogWrite(PinAzul, B);
-    }
-
-    void Apagar(){
-        Encender(0, 0, 0);
-    }
-
-};
-
-struct SensorUltrasonico {
-
-    int PinTrigger;
-    int PinEcho;
-
-    SensorUltrasonico(int Trigger, int Echo){
-        PinTrigger = Trigger;
-        PinEcho = Echo;
-    }
-
-    void Inicializar(){
-        pinMode(PinTrigger, OUTPUT);
-        pinMode(PinEcho, INPUT);
-    }
-
-    float LeerDistancia(){
-        digitalWrite(PinTrigger, LOW);
-        delayMicroseconds(2);
-        digitalWrite(PinTrigger, HIGH);
-        delayMicroseconds(10);
-        digitalWrite(PinTrigger, LOW);
-
-        long Duracion = pulseIn(PinEcho, HIGH);
-        return Duracion * 0.0343 / 2;
-    }
-
-    bool HayPared(float Umbral){
-        return LeerDistancia() < Umbral;
-    }
-
-};
-
-struct SensoresUltrasonicos {
-
-    SensorUltrasonico Frontal, Derecho, Trasero, Izquierdo;
-    float UmbralPared = 15.0;
-
-    SensoresUltrasonicos() : Frontal(2, 3), Derecho(4, 5), Trasero(6, 7), Izquierdo(8, 9) {}
-
-    void Inicializar(){
-        Frontal.Inicializar();
-        Derecho.Inicializar();
-        Trasero.Inicializar();
-        Izquierdo.Inicializar();
-    }
-
-    int SensorUS(int n){
-        switch(n){
-            case 1:
-                if(Frontal.HayPared(UmbralPared)){
-                    return 1;
-                }
-                else return 0;
-
-            case 2:
-                if(Derecho.HayPared(UmbralPared)){
-                    return 1;
-                }
-                else return 0;
-
-            case 3:
-                if(Trasero.HayPared(UmbralPared)){
-                    return 1;
-                }
-                else return 0;
-
-            case 4:
-                if(Izquierdo.HayPared(UmbralPared)){
-                    return 1;
-                }
-                else return 0;
-
-            default:
-                return -1;
-        }
-    }
-
-};
-
-struct ControladorMotores {
-
-    int DireccionI2C = 0x34;
-
-    long PulsosPorVuelta = 0;   // pendiente
-    float DiametroRuedaCm = 0;  // pendiente
-    float DistanciaEntreRuedasCm = 0; // pendiente
-    int VelocidadFija = 50;
-
-    void Inicializar(){
-        // Pendiente
-    }
-
-    void EnviarVelocidad(int Canal, int Velocidad){
-        // Canal pendiente
-    }
-
-    long LeerPulsos(int Canal){
-        // Canal pendiente
+    int LeerCodigoaARUCOS(){
         return 0;
     }
 
-    void ReiniciarPulsos(int Canal){
-        // Canal pendiente
-    }
-
-    long DistanciaAPulsos(float DistanciaCm){
-
-        float VueltasNecesarias = DistanciaCm / (3.14159 * DiametroRuedaCm);
-        return VueltasNecesarias * PulsosPorVuelta;
-
-    }
-
-    void Detener(){
-
-        EnviarVelocidad(1, 0);
-        EnviarVelocidad(2, 0);
-        EnviarVelocidad(3, 0);
-        EnviarVelocidad(4, 0);
-
-    }
-
-    void MoverDistancia(int SignoFrontalIzq, int SignoFrontalDer, int SignoTraseraIzq, int SignoTraseraDer, float DistanciaCm){
-
-        ReiniciarPulsos(1);
-
-        long PulsosObjetivo = DistanciaAPulsos(DistanciaCm);
-
-        EnviarVelocidad(1, SignoFrontalIzq * VelocidadFija);
-        EnviarVelocidad(2, SignoFrontalDer * VelocidadFija);
-        EnviarVelocidad(3, SignoTraseraIzq * VelocidadFija);
-        EnviarVelocidad(4, SignoTraseraDer * VelocidadFija);
-
-        while(abs(LeerPulsos(1)) < PulsosObjetivo){
-        }
-
-        Detener();
-
-    }
-
-    void Movimiento1(float DistanciaCm){
-        MoverDistancia(1, 1, 1, 1, DistanciaCm);
-    }
-
-    void Movimiento3(float DistanciaCm){
-        MoverDistancia(-1, -1, -1, -1, DistanciaCm);
-    }
-
-    void Movimiento2(float DistanciaCm){
-        MoverDistancia(1, -1, -1, 1, DistanciaCm);
-    }
-
-    void Movimiento4(float DistanciaCm){
-        MoverDistancia(-1, 1, 1, -1, DistanciaCm);
-    }
-
-    void Girar(float Grados){
-
-        ReiniciarPulsos(1);
-        ReiniciarPulsos(2);
-
-        float ArcoCm = (abs(Grados) / 360.0) * 3.14159 * DistanciaEntreRuedasCm;
-        long PulsosObjetivo = DistanciaAPulsos(ArcoCm);
-
-        int Sentido = (Grados >= 0) ? 1 : -1; // positivo = horario, negativo = antihorario
-
-        EnviarVelocidad(1, -Sentido * VelocidadFija); // frontal izquierda
-        EnviarVelocidad(2, Sentido * VelocidadFija);  // frontal derecha
-        EnviarVelocidad(3, -Sentido * VelocidadFija); // trasera izquierda
-        EnviarVelocidad(4, Sentido * VelocidadFija);  // trasera derecha
-
-        while(abs(LeerPulsos(1)) < PulsosObjetivo and abs(LeerPulsos(2)) < PulsosObjetivo){
-            // espera activa hasta completar el giro
-        }
-
-        Detener();
-
-    };
-
-struct IMU {
-
-    int DireccionI2C;
-
-    float LeerRumbo(){
-        // lectura del compas integrado
-        return 0.0;
-    }
-
-    void LeerAceleracion(float &Ax, float &Ay, float &Az){
-        // lectura del acelerometro
-    }
-
-};
-
+}
 struct Mapa {
 
     //Mapa que guarda la etiqueta del objetivo de cada casilla
@@ -470,15 +208,17 @@ struct Robot {
     int EstadoObjetivos = 0;
     int EstadoLaberinto = 0;
     int ContadorColumna = 0;
+    int Sentido = 1;
 
     Mapa mapa;
     Navegacion navegacion;
 
+    Raspberry RB;
     SensoresUltrasonicos Sensores;
-    SensorColor SensorColor1;
-    LedRGB Led = LedRGB(10, 11, 12);
+    SensorColorA SensorColor1;
     ControladorMotores Motores;
     IMU Brujula;
+    PantallaLCD Pantalla;
 
     // Pendiente corregir logica por deteccion de salida
     void Movimiento(int MovimientoActual){
@@ -511,19 +251,65 @@ struct Robot {
 
     }
 
+    int DistanciaCalibracion = 5;
+    void Calibracion(){
+        while(Brujula.LeerGiroZ() < 358 and Brujula.LeerGiroZ > 2){
+            if(Brujula.LeerGiroz() > 180){
+                Sentido = -1;
+            }
+            else{
+                Sentido = 1;
+            }
+            Motores.girar((360 - Brujula.LeerGiroZ)*Sentido);
+        }
+
+        if(Sensores.Frontal.LeerDistancia() > DistanciaCalibracion){
+            Motores.Movimiento1(Sensores.Frontal.LeerDistancia() - DistanciaCalibracion);
+        }
+        if(Sensores.Derecho.LeerDistancia() > DistanciaCalibracion){
+            Motores.Movimiento2(Sensores.Derecho.LeerDistancia() - DistanciaCalibracion);
+        }
+        if(Sensores.Trasero.LeerDistancia() > DistanciaCalibracion){
+            Motores.Movimiento3(Sensores.Trasero.LeerDistancia() - DistanciaCalibracion);
+        }
+        if(Sensores.Izquierdo.LeerDistancia() > DistanciaCalibracion){
+            Motores.Movimiento4(Sensores.Izquierdo.LeerDistancia() - DistanciaCalibracion);
+        }
+    }
+
     void MostrarColor(){
         int Color = SensorColor1.LeerColor();
 
         switch(Color){
-            case 1: Led.Encender(92, 225, 230); break;
-            case 2: Led.Encender(255, 222, 89); break;
-            case 3: Led.Encender(255, 145, 77); break;
-            case 4: Led.Encender(255, 102, 196); break;
+
+            case 1:  
+            Pantalla.ImprimirText(0, "Azul"); 
+            delay(3000);
+            Pantalla.ImprimirText(0, "         ");
+            break;
+
+            case 2:              
+            Pantalla.ImprimirText(0, "Amarillo"); 
+            delay(3000);
+            Pantalla.ImprimirText(0, "           ");
+            break;
+
+            case 3:
+            Pantalla.ImprimirText(0, "Naranja"); 
+            delay(3000);
+            Pantalla.ImprimirText(0, "         ");
+            break;
+
+            case 4:
+            Pantalla.ImprimirText(0, "Rosa"); 
+            delay(3000);
+            Pantalla.ImprimirText(0, "     ");
+            break;
+
             default: break;
         }
         
     }
-
 
 };
 
@@ -533,10 +319,14 @@ void setup(){
 
     Wire.begin();
 
+    robot.Brujula.Inicializar();
     robot.Sensores.Inicializar();
     robot.SensorColor1.Inicializar();
     robot.Led.Inicializar();
     robot.Motores.Inicializar();
+    robot.Pantalla.Inicializar();
+
+    robot.Brujula.Calibrar();
 
     robot.mapa.MapaVisitadas[robot.PosicionActual[0]][robot.PosicionActual[1]] = 1;
 
@@ -551,6 +341,8 @@ void loop(){
 
     if(robot.EstadoLaberinto == 0){
 
+        robot.Brujula.Actualizar()
+
         robot.navegacion.CalcularPrioridad(robot.PosicionActual, robot.mapa);
 
         while(robot.navegacion.EstadoMovimiento == 1){
@@ -559,11 +351,13 @@ void loop(){
 
         }
 
-        robot.Led.Apagar();
-
         robot.Movimiento(robot.navegacion.MovimientoActual);
 
         robot.MostrarColor();
+
+        robot.Brujula.Actualizar():
+
+        robot.Pantalla.ImprimirNum(robot.RB.LeerCodigoaARUCOS());
 
         robot.mapa.ActualizarListaRecientes(robot.PosicionActual);
 
