@@ -1,9 +1,13 @@
 #include <Wire.h>
 #include <Adafruit_TCS34725.h>
 #include <Servo.h>
+
 #include "Componentes/SensorColorB.h"
 #include "Componentes/SensoresUltrasonicos.h"
 #include "Componentes/ControladorMotores.h"
+#include "Componentes/IMU.h"
+#include "Componentes/PantallaLCD.h"
+#include "Componentes/ArucoReciever.h"
 #include "Componentes/IMU.h"
 #include "Componentes/ServoMotor.h"
 
@@ -29,7 +33,7 @@ struct Robot {
 
     int BuscarColor(int Direccion, int VelocidadLenta, int DistanciaMaximaCm){
 
-        Motores.ReiniciarPulsos(1);
+        Motores.ReiniciarPulsos();
         ColorInicial = 7;
 
         switch(Direccion){

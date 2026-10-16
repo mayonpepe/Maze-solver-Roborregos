@@ -1,4 +1,3 @@
-
 import cv2
 import serial
 import time
@@ -24,6 +23,7 @@ app = Flask(__name__)
 def camera_loop():
     global latest_frame
     last_sent = 0
+
     while True:
         frame = picam2.capture_array()
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
@@ -34,8 +34,8 @@ def camera_loop():
             cv2.aruco.drawDetectedMarkers(frame, corners, ids)
             now = time.time()
             if now - last_sent > 1:
-                marker_id = str(ids.flatten()[0])
-                ser.write((marker_id + '\n').encode())
+                marker_id = int(ids.flatten()[0])
+                ser.write(f"{marker_id}\n".encode())
                 print(f"Enviado: {marker_id}")
                 last_sent = now
 
