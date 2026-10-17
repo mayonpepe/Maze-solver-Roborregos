@@ -3,7 +3,7 @@
 #include <Wire.h>
 #include <Adafruit_TCS34725.h>
 
-struct SensorColor {
+struct SensorColorB {
 
     Adafruit_TCS34725 Sensor = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
 

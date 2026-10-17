@@ -126,7 +126,7 @@ struct Navegacion {
     float MovientoTemporal = 0;
     int EstadoMovimiento = 1;
     int DeteccionSalida = 0;
-    int CasillaMovimiento[2] = [0, 0] 
+    int CasillaMovimiento[2] = {0, 0}; 
 
     void CalcularObjetivo(Mapa &mapa){
 
@@ -141,7 +141,7 @@ struct Navegacion {
 
     }
     
-    void CasillaMovimientoF(int Movimiento){
+    void CasillaMovimientoF(int Movimiento, int PosicionActual[2]){
         switch(Movimiento)
         {
         case 1:
@@ -149,7 +149,7 @@ struct Navegacion {
             CasillaMovimiento[1] = PosicionActual[1];
             break;
         case 2:
-            CasillaMovimiento[0] = PosicionActual[0];
+            CasillaMovimiento[0] = Motores.PosicionActual[0];
             CasillaMovimiento[1] = PosicionActual[1] + 1;
             break;
         case 3:
@@ -192,24 +192,20 @@ struct Navegacion {
             PrioridadMovimiento[3] = Distancia(PosicionActual[0], PosicionActual[1] - 1)*FactorDistancia + mapa.VecesVisitadas(4, PosicionActual)*FactorPasados + mapa.MovimientosRecientes(PosicionActual[0], PosicionActual[1] - 1)*FactorRecientes;
         }
         else DisponibilidadMovimiento[3] = 1;
-
-        CasillaMovimiento(1);
-        if(CasillaMovimiento[0] == Final[0] and CasillaMovimiento[1] == Final[1]){
+        
+        if(PosicionActual[0] - 1 == Final[0] and PosicionActual[1] == Final[1]){
             DisponibilidadMovimiento[0] = 1;
         }
 
-        CasillaMovimiento(2);
-        if(CasillaMovimiento[0] == Final[0] and CasillaMovimiento[1] == Final[1]){
+        if(PosicionActual[0] == Final[0] and PosicionActual[1] + 1 == Final[1]){
             DisponibilidadMovimiento[1] = 1;
         }
 
-        CasillaMovimiento(3);
-        if(CasillaMovimiento[0] == Final[0] and CasillaMovimiento[1] == Final[1]){
+        if(PosicionActual[0] + 1 == Final[0] and PosicionActual[1] == Final[1]){
             DisponibilidadMovimiento[2] = 1;
         }
 
-        CasillaMovimiento(4);
-        if(CasillaMovimiento[0] == Final[0] and CasillaMovimiento[1] == Final[1]){
+        if(PosicionActual[0] == Final[0] and PosicionActual[1] - 1 == Final[1]){
             DisponibilidadMovimiento[3] = 1;
         }
     }
@@ -264,7 +260,6 @@ struct Robot {
 
     Servo ServoMotor;
     ArucoReceptor Aruco;
-    Raspberry RB;
     SensoresUltrasonicos Sensores;
     SensorColorA SensorColor1;
     ControladorMotores Motores;
@@ -281,7 +276,7 @@ struct Robot {
                 navegacion.DeteccionSalida = 1;
                 Motores.Movimiento3(15);
 
-                navegacion.CasillaMovimientoF(1);
+                navegacion.CasillaMovimientoF(1, PosicionActual);
                 navegacion.CambiarFinal();
             }
             else{
@@ -297,7 +292,7 @@ struct Robot {
                 navegacion.DeteccionSalida = 1;
                 Motores.Movimiento4(15);
 
-                navegacion.CasillaMovimientoF(2);
+                navegacion.CasillaMovimientoF(2, PosicionActual);
                 navegacion.CambiarFinal();
             }
             else{
@@ -313,7 +308,7 @@ struct Robot {
                 navegacion.DeteccionSalida = 1;
                 Motores.Movimiento1(15);
 
-                navegacion.CasillaMovimientoF(3);
+                navegacion.CasillaMovimientoF(3, PosicionActual);
                 navegacion.CambiarFinal();
             }
             else{
@@ -329,7 +324,7 @@ struct Robot {
                 navegacion.DeteccionSalida = 1;
                 Motores.Movimiento2(15);
 
-                navegacion.CasillaMovimientoF(4);
+                navegacion.CasillaMovimientoF(4, PosicionActual);
                 navegacion.CambiarFinal();
             }
             else{
@@ -339,9 +334,13 @@ struct Robot {
             break;
         }
 
-        if(Navegacion.DeteccionSalida == 0){
+        if(navegacion.DeteccionSalida == 0){
             MovimientosTotales++;
             mapa.MapaVisitadas[PosicionActual[0]][PosicionActual[1]] += 1;
+            Serial.print("Me movi a ");
+            Serial.print(PosicionActual[0]);
+            Serial.print(", ");
+            Serial.println(PosicionActual[1]);
         }
 
         navegacion.ReiniciarMovimiento();
@@ -350,26 +349,26 @@ struct Robot {
 
     int DistanciaCalibracion = 5;
     void Calibracion(){
-        while(Brujula.LeerGiroZ() < 358 and Brujula.LeerGiroZ > 2){
-            if(Brujula.LeerGiroz() > 180){
+        while(Brujula.LeerRumbo() < 358 and Brujula.LeerRumbo() > 2){
+            if(Brujula.LeerRumbo() > 180){
                 Sentido = -1;
             }
             else{
                 Sentido = 1;
             }
-            Motores.girar((360 - Brujula.LeerGiroZ)*Sentido);
+            Motores.Girar((Brujula.LeerRumbo() - 360)*Sentido);
         }
 
-        if(Sensores.Frontal.LeerDistancia() > DistanciaCalibracion){
+        if(Sensores.Frontal.LeerDistancia() > DistanciaCalibracion and Sensores.Frontal.LeerDistancia() < 20){
             Motores.Movimiento1(Sensores.Frontal.LeerDistancia() - DistanciaCalibracion);
         }
-        if(Sensores.Derecho.LeerDistancia() > DistanciaCalibracion){
+        if(Sensores.Derecho.LeerDistancia() > DistanciaCalibracion and and Sensores.Derecho.LeerDistancia() < 20){
             Motores.Movimiento2(Sensores.Derecho.LeerDistancia() - DistanciaCalibracion);
         }
-        if(Sensores.Trasero.LeerDistancia() > DistanciaCalibracion){
+        if(Sensores.Trasero.LeerDistancia() > DistanciaCalibracion and and Sensores.Trasero.LeerDistancia() < 20){
             Motores.Movimiento3(Sensores.Trasero.LeerDistancia() - DistanciaCalibracion);
         }
-        if(Sensores.Izquierdo.LeerDistancia() > DistanciaCalibracion){
+        if(Sensores.Izquierdo.LeerDistancia() > DistanciaCalibracion and and Sensores.Izquierdo.LeerDistancia() < 20){
             Motores.Movimiento4(Sensores.Izquierdo.LeerDistancia() - DistanciaCalibracion);
         }
     }
@@ -409,20 +408,32 @@ struct Robot {
     }
 
     void MostrarAruco(){
-        if Aruco.getId(){
-            Pantalla.ImprimirNum(0, Aruco.getId());
+
+        Aruco.actualizar(); 
+
+        int Id = Aruco.id;  
+
+        if(Id != -1){
+            Pantalla.ImprimirNum(0, Id);
             delay(2000);
             Pantalla.ImprimirText(0, "     ");
+            Aruco.id = -1;
         }
+
     }
     
     void MoverCamara(){
-        int x = 30
+
+        Aruco.id = -1;   
+
+        int x = 30;
         while(x <= 150){
-            ServoMotor.write(x)
+            ServoMotor.write(x);
+            Aruco.actualizar();
             delay(20);
             x = x + 1;
         }
+
     }
 
 };
@@ -432,14 +443,14 @@ Robot robot;
 void setup(){
 
     Wire.begin();
+    Serial.begin(9600);
 
     robot.Brujula.Inicializar();
     robot.Sensores.Inicializar();
     robot.SensorColor1.Inicializar();
-    robot.Led.Inicializar();
     robot.Motores.Inicializar();
     robot.Pantalla.Inicializar();
-    robot.Servo.Inicializar();
+    robot.ServoMotor.attach(9);
 
     robot.Brujula.Calibrar();
 
@@ -473,13 +484,13 @@ void loop(){
         robot.MostrarColor();
 
         robot.Brujula.Actualizar();
+
+        robot.MoverCamara();
         
         robot.MostrarAruco();
 
-        robot.MoverCamara();
-
         if(robot.navegacion.DeteccionSalida == 0){
-            mapa.ActualizarListaRecientes(robot.PosicionActual);
+            robot.mapa.ActualizarListaRecientes(robot.PosicionActual);
         }
 
         if(robot.PosicionActual[0] == robot.navegacion.Oy and robot.PosicionActual[1] == robot.navegacion.Ox and robot.EstadoObjetivos == 0){
@@ -523,8 +534,8 @@ void loop(){
         if(robot.ContadorObjetivos == 25 and robot.EstadoObjetivos == 0){
 
             robot.EstadoObjetivos++;
-            robot.navegacion.Ox = robot.Final[1];
-            robot.navegacion.Oy = robot.Final[0];
+            robot.navegacion.Ox = robot.navegacion.Final[1];
+            robot.navegacion.Oy = robot.navegacion.Final[0];
 
             if(robot.PosicionActual[0] == robot.navegacion.Oy and robot.PosicionActual[1] == robot.navegacion.Ox){
                 robot.EstadoLaberinto++;

@@ -37,6 +37,8 @@ struct ArucoReceptor {
   }
 
   int getId() {
+    Serial.print("El Arduino recivio ");
+    Serial.println(id);
     return id;
   }
 };

@@ -155,6 +155,8 @@ struct IMU {
         Actualizar();
 
         float R = Rumbo;
+        Serial.print("La brujula detectó ");
+        Serial.println(Rumbo);
 
         while(R < 0){
             R += 360;

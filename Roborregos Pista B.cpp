@@ -8,24 +8,12 @@
 #include "Componentes/IMU.h"
 #include "Componentes/PantallaLCD.h"
 #include "Componentes/ArucoReciever.h"
-#include "Componentes/IMU.h"
-#include "Componentes/ServoMotor.h"
-
-//Pendiente
-struct CamaraRB {
-
-    bool DetectarPelota(){
-        return 0;
-        return 1;
-    }
-
-}
 
 struct Robot {
 
     SensoresUltrasonicos Sensores;
-    SensorColor SensorColor1;
-    ServoMotor servo = Servo(13);
+    SensorColorB SensorColor1;
+    Servo servo;
     ControladorMotores Motores;
     IMU Brujula;
 
@@ -34,7 +22,7 @@ struct Robot {
     int BuscarColor(int Direccion, int VelocidadLenta, int DistanciaMaximaCm){
 
         Motores.ReiniciarPulsos();
-        ColorInicial = 7;
+        int ColorInicial = 7;
 
         switch(Direccion){
             //Adelante
@@ -67,11 +55,11 @@ struct Robot {
 
     void DeteccionPelotaYCheckpoint(int nodo, int SensorC, int SensorP){
 
-        if(Sensores.SensorUS(SensorC) == 0;){
+        if(Sensores.SensorUS(SensorC) == 0){
             CheckpointNodo = nodo;
         }
 
-        if(Sensores.SensorUS(SensorP) == 0;){
+        if(Sensores.SensorUS(SensorP) == 0){
             PelotaNodo = nodo;
         }
 
@@ -105,9 +93,9 @@ struct Robot {
             case 3:
                 Motores.Girar(180);
 
-                servo.MoverA(120);
+                servo.write(140);
                 Motores.Movimiento3(45);
-                servo.MoverA(0);
+                servo.write(70);
                 Motores.Movimiento1(45);
 
                 Motores.Girar(180);
@@ -118,9 +106,9 @@ struct Robot {
                 Motores.Movimiento1(30);
                 Motores.Girar(90);
 
-                servo.MoverA(120);
+                servo.write(140);
                 Motores.Movimiento3(45);
-                servo.MoverA(0);
+                servo.write(70);
                 Motores.Movimiento1(45);
 
                 Motores.Girar(-90);
@@ -133,9 +121,9 @@ struct Robot {
                 Motores.Movimiento1(60);
                 Motores.Movimiento4(30);
 
-                servo.MoverA(120);
+                servo.write(140);
                 Motores.Movimiento3(45);
-                servo.MoverA(0);
+                servo.write(70);
                 Motores.Movimiento1(45);
 
                 Motores.Movimiento2(30);
@@ -148,14 +136,14 @@ struct Robot {
                 Motores.Movimiento1(30);
                 Motores.Girar(-90);
 
-                servo.MoverA(120);
+                servo.write(140);
                 Motores.Movimiento3(45);
-                servo.MoverA(0);
+                servo.write(70);
                 Motores.Movimiento1(45);
 
                 Motores.Girar(90);
                 Motores.Movimiento3(30);
-                Motores.Moviento2(30);
+                Motores.Movimiento2(30);
                 break;
 
         }
@@ -223,26 +211,26 @@ struct Robot {
 
     void Seccion3(){
 
-        while(robot.SensorColor1.LeerColor() != 6){
+        while(SensorColor1.LeerColor() != 6){
 
-            int n = robot.SensorColor1.LeerColor();
+            int n = SensorColor1.LeerColor();
 
             switch(n){
 
                 case 2:
-                    robot.Motores.Movimiento1(30);
+                    Motores.Movimiento1(30);
                     break;
 
                 case 3:
-                    robot.Motores.Movimiento4(30);
+                    Motores.Movimiento4(30);
                     break;
 
                 case 4:
-                    robot.Motores.Movimiento2(30);
+                    Motores.Movimiento2(30);
                     break;
             
                 case 5:
-                    robot.Motores.Movimiento3(30);
+                    Motores.Movimiento3(30);
                     break;
 
                 default: break;
@@ -265,6 +253,7 @@ void setup(){
     robot.Sensores.Inicializar();
     robot.SensorColor1.Inicializar();
     robot.Motores.Inicializar();
+    robot.servo.attach(9);
 
 }
 

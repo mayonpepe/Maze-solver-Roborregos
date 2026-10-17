@@ -23,8 +23,12 @@ struct SensorUltrasonico {
         delayMicroseconds(10);
         digitalWrite(PinTrigger, LOW);
 
-        long Duracion = pulseIn(PinEcho, HIGH);
+        long Duracion = pulseIn(PinEcho, HIGH, 30000);
+        if(Duracion == 0){
+            return 999;   // sin eco = lejos
+        }
         return Duracion * 0.0343 / 2;
+        
     }
 
     bool HayPared(float Umbral){
